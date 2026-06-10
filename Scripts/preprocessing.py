@@ -1,6 +1,8 @@
 import pandas as pd
 import os
 from glob import glob
+from sklearn.model_selection import train_test_split
+from torchvision import transforms
 
 
 df = pd.read_csv('../Data/archive/HAM10000_metadata.csv')
@@ -20,5 +22,44 @@ df['path'] = df['image_id'].map(imageid_path_dict.get)
 df['cell_type'] = df['dx'].map(lesion_type_dict.get)
 df['cell_type_idx'] = pd.Categorical(df['cell_type']).codes
 
-# print(df.head())
+# Check class imbalance:
 # print(df['cell_type'].value_counts())
+
+## Made sure there are no missing or duplicate values.
+## Decide which of the two methods to use for handling missing values in the 'age' column. The first method fills missing values with the mean age, while the second method drops rows with missing age values.
+# df['age'].fillna((df['age'].mean()), inplace=True)
+df = df.dropna(subset=['age'])
+
+## Train-test split:
+train_df, test_df = train_test_split(
+    df,
+    test_size=0.10,
+    stratify=df['cell_type_idx'],
+    random_state=42
+)
+train_df, val_df = train_test_split(
+    train_df,
+    test_size=0.1111,
+    stratify=train_df['cell_type_idx'],
+    random_state=42
+)
+
+## Data transformation pipeline:
+
+train_transform = transforms.Compose([
+    transforms.Resize((224,224)),
+    transforms.RandomHorizontalFlip(),
+    transforms.RandomVerticalFlip(),
+    transforms.RandomRotation(20),
+    transforms.ColorJitter(
+        brightness=0.2,
+        contrast=0.2
+    ),
+    transforms.ToTensor()
+])
+
+test_transform = transforms.Compose([
+    transforms.Resize((224,224)),
+    transforms.ToTensor()
+])
+
