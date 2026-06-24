@@ -22,16 +22,19 @@ class HAM10000Dataset(Dataset):
 
         image = Image.open(img_path).convert("RGB")
 
-        label = self.df.loc[idx,
-                            'cell_type_idx']
-        
-        label = torch.tensor(label, dtype=torch.long)
+        label = torch.tensor(
+            self.df.loc[idx, 'cell_type_idx'],
+            dtype=torch.long
+        )
+
+        image_id = self.df.loc[idx, 'image_id']
 
         if self.transform:
             image = self.transform(image)
 
-        return image, label
-    
+        return image, label, image_id
+
+
 imagenet_mean = [
     0.485,
     0.456,

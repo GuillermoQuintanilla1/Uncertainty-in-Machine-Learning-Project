@@ -7,6 +7,9 @@ from preprocessing import preprocess_data
 from dataset import create_dataloaders
 from model import build_model
 from training import train_one_epoch, validate
+from evaluation import evaluate_model
+from mcdropout import mc_dropout_predict, compute_uncertainties
+from results import create_results_dataframe
 
 print(torch.cuda.is_available())
 print(torch.cuda.device_count())
@@ -59,12 +62,13 @@ print(train_df['cell_type'].value_counts())
 print(device)
 print(next(model.parameters()).device)
 
-images, labels = next(iter(train_loader))
+images, labels, image_ids = next(iter(train_loader))
 print(images.shape, labels.shape)
 
 num_epochs = 10
 best_val_loss = float('inf')
 
+'''
 for epoch in range(num_epochs):
 
     train_loss = train_one_epoch(
@@ -92,3 +96,73 @@ for epoch in range(num_epochs):
         best_val_loss = val_loss
         torch.save(model.state_dict(), "best_model.pth")
         print("Model saved.")
+
+'''
+
+model.load_state_dict(
+    torch.load(
+        "best_model.pth",
+        map_location=device
+    )
+)
+
+results_df = create_results_dataframe(
+    model,
+    test_loader,
+    device,
+    T=10
+)
+
+print(results_df.head())
+
+results_df.to_csv(
+    "test_results.csv",
+    index=False
+)
+
+'''
+metrics = evaluate_model(
+    model,
+    test_loader,
+    device
+)
+
+print(metrics)
+
+
+images, labels = next(
+    iter(test_loader)
+)
+
+images = images.to(device)
+
+predictions = mc_dropout_predict(
+    model,
+    images,
+    T=10
+)
+
+mean_probs, epistemic, aleatoric, entropy = (
+    compute_uncertainties(
+        predictions
+    )
+)
+
+print("Predicted class:",
+      mean_probs[0].argmax().item())
+
+print("Image root:",
+      mean_probs[0])
+
+print("Confidence:",
+      mean_probs[0].max().item())
+
+print("Epistemic:",
+      epistemic[0].item())
+
+print("Aleatoric:",
+      aleatoric[0].item())
+
+print("Entropy:",
+      entropy[0].item())
+'''

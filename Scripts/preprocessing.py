@@ -27,12 +27,12 @@ def preprocess_data():
     # Check class imbalance:
     # print(df['cell_type'].value_counts())
 
-    ## Made sure there are no missing or duplicate values.
-    ## Decide which of the two methods to use for handling missing values in the 'age' column. The first method fills missing values with the mean age, while the second method drops rows with missing age values.
+    # Made sure there are no missing or duplicate values.
+    # Decide which of the two methods to use for handling missing values in the 'age' column. The first method fills missing values with the mean age, while the second method drops rows with missing age values.
     # df['age'].fillna((df['age'].mean()), inplace=True)
     df = df.dropna(subset=['age'])
 
-    ## Train-test split:
+    # Train-test split:
     train_df, test_df = train_test_split(
         df,
         test_size=0.10,
